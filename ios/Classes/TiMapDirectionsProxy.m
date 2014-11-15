@@ -98,41 +98,6 @@
                                                        routes, @"routes",
                                                        nil]];
             }
-            
-            /*
-            if ([response.routes count] > 0)
-            {
-                MKRoute *route = [response.routes objectAtIndex:0];
-                NSUInteger pointCount = route.polyline.pointCount;
-                CLLocationCoordinate2D *routeCoordinates = malloc(pointCount * sizeof(CLLocationCoordinate2D));
-                [route.polyline getCoordinates:routeCoordinates
-                                         range:NSMakeRange(0, pointCount)];
-                
-                NSMutableArray *coordinates = [NSMutableArray array];
-                
-                for (int i = 0; i < pointCount; i++)
-                {
-                    [coordinates addObject:[NSDictionary dictionaryWithObjectsAndKeys:
-                                            NUMDOUBLE(routeCoordinates[i].latitude), @"latitude",
-                                            NUMDOUBLE(routeCoordinates[i].longitude), @"longitude",
-                                            nil]];
-                }
-                
-                for (MKRouteStep *step in route.steps)
-                {
-                    NSLog(@"instruction %@, notice %@, distance %f", step.instructions, step.notice, step.distance);
-                }
-                
-                
-                if ([self _hasListeners:@"success"])
-                {
-                    [self fireEvent:@"success" withObject:[NSDictionary dictionaryWithObjectsAndKeys:
-                                                           coordinates, @"coordinates",
-                                                           nil]];
-                }
-                
-                free(routeCoordinates);
-            }*/
         }];
     }
     
