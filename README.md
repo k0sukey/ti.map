@@ -19,7 +19,15 @@ the Terms of Service agreement with Appcelerator, Inc.
 This fork is MKDirections support.
 Use only for iOS.
 
+### Features
+
+* MKDirections support
+* Alternate routes
+* Instructions and distance
+
 ### Sample code
+
+more detail to see example/tests/directions.js
 
 ```
 var Map = require('ti.map');
@@ -30,8 +38,12 @@ var map = Map.createView({
     userLocation: true,
     mapType: Map.NORMAL_TYPE,
     animate: true,
-    region: {latitude: 35.665213, longitude: 139.730011, latitudeDelta: 0.02, longitudeDelta: 0.02 }, //Roppongi
-    top: '10%'
+    region: {
+        latitude: 35.665213,
+        longitude: 139.730011,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02
+    } //Roppongi
 });
 win.add(map);
 
@@ -48,7 +60,7 @@ var directions = Map.createDirections({
 
 directions.addEventListener('success', function(e){
     var route = Map.createRoute({
-        points: e.coordinates,
+        points: e.routes[0],
         color: 'blue',
         width: 5.0
     });

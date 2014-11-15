@@ -38,12 +38,18 @@
         MKPlacemark *destinationPlacemark = [[MKPlacemark alloc] initWithCoordinate:destinationCoordinate
                                                              addressDictionary:nil];
         
-        MKMapItem *sourceItem_ = [[MKMapItem alloc] initWithPlacemark:sourcePlacemark];
-        MKMapItem *destinationItem_ = [[MKMapItem alloc] initWithPlacemark:destinationPlacemark];
+        MKMapItem *sourceItem = [[MKMapItem alloc] initWithPlacemark:sourcePlacemark];
+        MKMapItem *destinationItem = [[MKMapItem alloc] initWithPlacemark:destinationPlacemark];
         
         MKDirectionsRequest *request = [[MKDirectionsRequest alloc] init];
-        [request setSource:sourceItem_];
-        [request setDestination:destinationItem_];
+        [request setSource:sourceItem];
+        [request setDestination:destinationItem];
+        [request setRequestsAlternateRoutes:YES];
+        
+        RELEASE_TO_NIL(sourcePlacemark);
+        RELEASE_TO_NIL(destinationPlacemark);
+        RELEASE_TO_NIL(sourceItem);
+        RELEASE_TO_NIL(destinationItem);
         
         MKDirections *directions = [[MKDirections alloc] initWithRequest:request];
         [directions calculateDirectionsWithCompletionHandler:^(MKDirectionsResponse *response, NSError *error){
@@ -57,6 +63,43 @@
                 return;
             }
             
+            NSMutableArray *routes = [NSMutableArray array];
+            
+            for (MKRoute *route in response.routes)
+            {
+                NSMutableArray *coordinates = [NSMutableArray array];
+                
+                for (MKRouteStep *step in route.steps)
+                {
+                    NSUInteger pointCount = step.polyline.pointCount;
+                    CLLocationCoordinate2D *routeCoordinates = malloc(pointCount * sizeof(CLLocationCoordinate2D));
+                    [step.polyline getCoordinates:routeCoordinates
+                                             range:NSMakeRange(0, pointCount)];
+                    
+                    for (int i = 0; i < pointCount; i++)
+                    {
+                        [coordinates addObject:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                (i == 0 ? step.instructions : @""), @"instructions",
+                                                NUMFLOAT(i == 0 ? step.distance : .0f), @"distance",
+                                                NUMDOUBLE(routeCoordinates[i].latitude), @"latitude",
+                                                NUMDOUBLE(routeCoordinates[i].longitude), @"longitude",
+                                                nil]];
+                    }
+                    
+                    free(routeCoordinates);
+                }
+                
+                [routes addObject:coordinates];
+            }
+            
+            if ([self _hasListeners:@"success"])
+            {
+                [self fireEvent:@"success" withObject:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                       routes, @"routes",
+                                                       nil]];
+            }
+            
+            /*
             if ([response.routes count] > 0)
             {
                 MKRoute *route = [response.routes objectAtIndex:0];
@@ -75,6 +118,12 @@
                                             nil]];
                 }
                 
+                for (MKRouteStep *step in route.steps)
+                {
+                    NSLog(@"instruction %@, notice %@, distance %f", step.instructions, step.notice, step.distance);
+                }
+                
+                
                 if ([self _hasListeners:@"success"])
                 {
                     [self fireEvent:@"success" withObject:[NSDictionary dictionaryWithObjectsAndKeys:
@@ -83,7 +132,7 @@
                 }
                 
                 free(routeCoordinates);
-            }
+            }*/
         }];
     }
     
