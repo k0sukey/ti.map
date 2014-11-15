@@ -79,8 +79,8 @@
                     for (int i = 0; i < pointCount; i++)
                     {
                         [coordinates addObject:[NSDictionary dictionaryWithObjectsAndKeys:
-                                                (i == 0 ? step.instructions : @""), @"instructions",
-                                                NUMFLOAT(i == 0 ? step.distance : .0f), @"distance",
+                                                (i == pointCount - 1 ? step.instructions : @""), @"instructions",
+                                                NUMFLOAT(i == pointCount - 1 ? step.distance : .0f), @"distance",
                                                 NUMDOUBLE(routeCoordinates[i].latitude), @"latitude",
                                                 NUMDOUBLE(routeCoordinates[i].longitude), @"longitude",
                                                 nil]];
