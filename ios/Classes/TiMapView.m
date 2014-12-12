@@ -624,6 +624,11 @@
     [TiMapModule logAddedIniOS7Warning:@"rotateEnabled"];
 }
 
+-(void)setZoomEnabled_:(id)value
+{
+    [TiMapModule logAddedIniOS7Warning:@"zoomEnabled"];
+}
+
 -(void)setShowsBuildings_:(id)value
 {
     [TiMapModule logAddedIniOS7Warning:@"showsBuildings"];
