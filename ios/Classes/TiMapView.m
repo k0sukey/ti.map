@@ -23,6 +23,17 @@
 {
 	if (map!=nil)
 	{
+        for (UIGestureRecognizer *gestureRecognizer in [map gestureRecognizers])
+        {
+            if ([gestureRecognizer isKindOfClass:[UITapGestureRecognizer class]] ||
+                [gestureRecognizer isKindOfClass:[UIPanGestureRecognizer class]])
+            {
+                gestureRecognizer.delegate = nil;
+                [map removeGestureRecognizer:gestureRecognizer];
+            }
+
+        }
+        
 		map.delegate = nil;
 		RELEASE_TO_NIL(map);
 	}
@@ -70,9 +81,88 @@
         [self addSubview:map];
         mapLine2View = CFDictionaryCreateMutable(NULL, 10, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
         //Initialize loaded state to YES. This will automatically go to NO if the map needs to download new data
+        
+        UITapGestureRecognizer *tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self
+                                                                                               action:@selector(tapGesture:)];
+        tapGestureRecognizer.numberOfTouchesRequired = 1;
+        [map addGestureRecognizer:tapGestureRecognizer];
+        tapGestureRecognizer.delegate = self;
+        [tapGestureRecognizer release];
+        
+        UIPanGestureRecognizer *panGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self
+                                                                                               action:@selector(panGesture:)];
+        [map addGestureRecognizer:panGestureRecognizer];
+        panGestureRecognizer.delegate = self;
+        [panGestureRecognizer release];
+        
         loaded = YES;
     }
     return map;
+}
+
+- (void)tapGesture:(UIGestureRecognizer *)tapGestureRecognizer
+{
+    if (tapGestureRecognizer.state != UIGestureRecognizerStateEnded)
+    {
+        return;
+    }
+    
+    if ([self.proxy _hasListeners:@"click"])
+    {
+        CGPoint point = [tapGestureRecognizer locationInView:map];
+        CLLocationCoordinate2D coordinate = [map convertPoint:point
+                                         toCoordinateFromView:map];
+        
+        [self.proxy fireEvent:@"click" withObject:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                   NUMFLOAT(point.x), @"x",
+                                                   NUMFLOAT(point.y), @"y",
+                                                   NUMDOUBLE(coordinate.latitude), @"latitude",
+                                                   NUMDOUBLE(coordinate.longitude), @"longitude",
+                                                   nil]];
+    }
+}
+
+- (void)panGesture:(UIGestureRecognizer *)panGestureRecognizer
+{
+    CGPoint point = [panGestureRecognizer locationInView:map];
+    CLLocationCoordinate2D coordinate = [map convertPoint:point
+                                     toCoordinateFromView:map];
+    
+    if (panGestureRecognizer.state == UIGestureRecognizerStateBegan &&
+        [self.proxy _hasListeners:@"touchstart"])
+    {
+        [self.proxy fireEvent:@"touchstart" withObject:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                        NUMFLOAT(point.x), @"x",
+                                                        NUMFLOAT(point.y), @"y",
+                                                        NUMDOUBLE(coordinate.latitude), @"latitude",
+                                                        NUMDOUBLE(coordinate.longitude), @"longitude",
+                                                        nil]];
+    }
+    else if (panGestureRecognizer.state == UIGestureRecognizerStateChanged &&
+             [self.proxy _hasListeners:@"touchmove"])
+    {
+        [self.proxy fireEvent:@"touchmove" withObject:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                        NUMFLOAT(point.x), @"x",
+                                                        NUMFLOAT(point.y), @"y",
+                                                        NUMDOUBLE(coordinate.latitude), @"latitude",
+                                                        NUMDOUBLE(coordinate.longitude), @"longitude",
+                                                        nil]];
+    }
+    else if (panGestureRecognizer.state == UIGestureRecognizerStateEnded &&
+             [self.proxy _hasListeners:@"touchend"])
+    {
+        [self.proxy fireEvent:@"touchend" withObject:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                        NUMFLOAT(point.x), @"x",
+                                                        NUMFLOAT(point.y), @"y",
+                                                        NUMDOUBLE(coordinate.latitude), @"latitude",
+                                                        NUMDOUBLE(coordinate.longitude), @"longitude",
+                                                        nil]];
+    }
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
+{
+    return YES;
 }
 
 - (id)accessibilityElement
